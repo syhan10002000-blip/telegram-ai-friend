@@ -1,0 +1,26 @@
+name: Telegram AI Message
+
+on:
+  schedule:
+    - cron: '0 18 * * *'   # هر روز ساعت ۱۸ UTC (حدود ۲۱:۳۰ ایران)
+  workflow_dispatch:
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send message
+        run: |
+          TEXT=$(curl -s https://api.openai.com/v1/chat/completions \
+            -H "Content-Type: application/json" \
+            -H "Authorization: Bearer ${{ secrets.OPENAI_API_KEY }}" \
+            -d '{
+              "model": "gpt-4.1-mini",
+              "messages": [
+                {"role": "system", "content": "با لحن دوستانه و مهربان، یک پیام کوتاه برای احوال‌پرسی بفرست."}
+              ]
+            }' | jq -r '.choices[0].message.content')
+
+          curl -s -X POST https://api.telegram.org/bot${{ secrets.TELEGRAM_BOT_TOKEN }}/sendMessage \
+            -d chat_id=${{ secrets.TELEGRAM_CHAT_ID }} \
+            -d text="$TEXT"
